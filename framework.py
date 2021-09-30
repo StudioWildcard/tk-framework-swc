@@ -35,11 +35,16 @@ class SwcFramework(sgtk.platform.Framework):
 
         # In case the task folder is not registered for some reason, we can try to find it
         if not context.task:
-            if context.step:
-                if context.step["name"] == "Animations":
+            # This is either an Asset root or an Animation
+            if not context.step:
+                context_entity = context.sgtk.shotgun.find_one(context.entity["type"],
+                                                               [["id", "is", context.entity["id"]]],
+                                                               ["sg_asset_parent","sg_asset_type"])
+                # Must be an animation...
+                if context_entity.get("sg_asset_type") == "Animations":
                     file_name = os.path.splitext(os.path.basename(path))[0]
                     # SWC JR: This could get slow if there are a lot of tasks, not sure if there is a way to query instead            
-                    tasks = context.sgtk.shotgun.find("Task", [["entity", "is", context.entity],["step", "is", context.step]], ['content'])
+                    tasks = context.sgtk.shotgun.find("Task", [["entity", "is", context.entity]], ['content'])
                     match_length = len(file_name)
                     new_context_id = None
                     for task in tasks:                        
@@ -53,9 +58,9 @@ class SwcFramework(sgtk.platform.Framework):
                     
                     if new_context_id:
                         context = tk.context_from_entity("Task", new_context_id)
-                else:
-                    file_folder = os.path.basename(os.path.dirname(path))
-                    context_task = context.sgtk.shotgun.find_one("Task", [["content", "is", file_folder],["entity", "is", context.entity],["step", "is", context.step]])
-                    if context_task:
-                        context = tk.context_from_entity("Task", context_task["id"])
+            if context.step:
+                file_folder = os.path.basename(os.path.dirname(path))
+                context_task = context.sgtk.shotgun.find_one("Task", [["content", "is", file_folder],["entity", "is", context.entity],["step", "is", context.step]])
+                if context_task:
+                    context = tk.context_from_entity("Task", context_task["id"])
         return context
