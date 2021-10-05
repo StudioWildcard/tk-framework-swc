@@ -42,25 +42,36 @@ class SwcFramework(sgtk.platform.Framework):
                                                                ["sg_asset_parent","sg_asset_type"])
                 # Must be an animation...
                 if context_entity.get("sg_asset_type") == "Animations":
-                    file_name = os.path.splitext(os.path.basename(path))[0]
-                    # SWC JR: This could get slow if there are a lot of tasks, not sure if there is a way to query instead            
-                    tasks = context.sgtk.shotgun.find("Task", [["entity", "is", context.entity]], ['content'])
-                    match_length = len(file_name)
-                    new_context_id = None
-                    for task in tasks:                        
-                        task_content = task['content']
-                        new_length = len(file_name) - len(task_content)
-                        if task_content in file_name and new_length < match_length:
-                            # We found a matching task
-                            new_context_id = task['id']
-                            # This is the new best task
-                            match_length = new_length
-                    
-                    if new_context_id:
-                        context = tk.context_from_entity("Task", new_context_id)
-            if context.step:
+                    return self._find_context(tk,context,path)
+
+            elif context.step['name'] == "Animations":
+                return self._find_context(tk,context,path)
+
+            elif context.step['name'] != "Animations":
                 file_folder = os.path.basename(os.path.dirname(path))
                 context_task = context.sgtk.shotgun.find_one("Task", [["content", "is", file_folder],["entity", "is", context.entity],["step", "is", context.step]])
                 if context_task:
-                    context = tk.context_from_entity("Task", context_task["id"])
+                    return tk.context_from_entity("Task", context_task["id"])
+        
         return context
+
+    def _find_context(self, tk, context, path):
+        file_name = os.path.splitext(os.path.basename(path))[0]
+        # SWC JR: This could get slow if there are a lot of tasks, not sure if there is a way to query instead            
+        tasks = context.sgtk.shotgun.find("Task", [["entity", "is", context.entity]], ['content'])
+        match_length = len(file_name)
+        new_context_id = None
+
+        for task in tasks:                        
+            task_content = task['content']
+            new_length = len(file_name) - len(task_content)
+            if task_content in file_name and new_length < match_length:
+                # We found a matching task
+                new_context_id = task['id']
+                # This is the new best task
+                match_length = new_length
+        
+        if new_context_id:
+            context = tk.context_from_entity("Task", new_context_id)   
+        
+        return context     
