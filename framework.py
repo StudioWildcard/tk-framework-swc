@@ -8,9 +8,14 @@
 # agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
-import sgtk,os
+import sgtk,os,re
 
 logger = sgtk.platform.get_logger(__name__)
+
+# import ptvsd
+
+# # Allow other computers to attach to ptvsd at this IP address and port.
+# ptvsd.enable_attach(address=('localhost', 5678), redirect_output=True)
 
 class SwcFramework(sgtk.platform.Framework):
     def init_framework(self):
@@ -35,23 +40,43 @@ class SwcFramework(sgtk.platform.Framework):
 
         # In case the task folder is not registered for some reason, we can try to find it
         if not context.task:
-            # This is either an Asset root or an Animation
-            if not context.step:
-                context_entity = context.sgtk.shotgun.find_one(context.entity["type"],
-                                                               [["id", "is", context.entity["id"]]],
-                                                               ["sg_asset_parent","sg_asset_type"])
-                # Must be an animation...
-                if context_entity.get("sg_asset_type") == "Animations":
+            # Publishing Asset
+            if context.entity["type"] == "CustomEntity03":
+                # We can only hope to match this file if it already is in a Step folder
+                if context.step:
+                    file_name = os.path.splitext(os.path.basename(path))[0]
+                    # Get all the possible tasks for this Asset Step 
+                    context_tasks = context.sgtk.shotgun.find("Task", [["entity", "is", context.entity],["step", "is", context.step]], ["content"])
+                    for context_task in context_tasks:                        
+                        # Build the regex pattern using https://regex101.com/r/uK8Ca4/1
+                        task_name = context_task.get("content")
+                        regex = r"\S*(" + re.escape(task_name) + r"){1}(?:_\w*)?$"
+                        matches = re.finditer(regex, file_name)
+                        for matchNum, match in enumerate(matches, start=1):
+                            for group in match.groups():
+                                # Assuming there is only ever one match since the match is at the end of the string
+                                if group == task_name:
+                                    return tk.context_from_entity("Task", context_task["id"])                    
+            
+            # All other entities
+            else:
+                # This is either an Asset root or an Animation
+                if not context.step:
+                    context_entity = context.sgtk.shotgun.find_one(context.entity["type"],
+                                                                [["id", "is", context.entity["id"]]],
+                                                                ["sg_asset_parent","sg_asset_type"])
+                    # Must be an animation...
+                    if context_entity.get("sg_asset_type") == "Animations":
+                        return self._find_context(tk,context,path)
+
+                elif context.step['name'] == "Animations":
                     return self._find_context(tk,context,path)
 
-            elif context.step['name'] == "Animations":
-                return self._find_context(tk,context,path)
-
-            elif context.step['name'] != "Animations":
-                file_folder = os.path.basename(os.path.dirname(path))
-                context_task = context.sgtk.shotgun.find_one("Task", [["content", "is", file_folder],["entity", "is", context.entity],["step", "is", context.step]])
-                if context_task:
-                    return tk.context_from_entity("Task", context_task["id"])
+                elif context.step['name'] != "Animations":
+                    file_folder = os.path.basename(os.path.dirname(path))
+                    context_task = context.sgtk.shotgun.find_one("Task", [["content", "is", file_folder],["entity", "is", context.entity],["step", "is", context.step]])
+                    if context_task:
+                        return tk.context_from_entity("Task", context_task["id"])
         
         return context
 
