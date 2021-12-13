@@ -38,6 +38,10 @@ class SwcFramework(sgtk.platform.Framework):
         tk = sgtk.sgtk_from_path( path )
         context = tk.context_from_path(path)
 
+        if not context:
+            self.log_debug(f"{path} does not correspond to any context!")
+            return None
+            
         # In case the task folder is not registered for some reason, we can try to find it
         if not context.task:
             # Publishing Asset
