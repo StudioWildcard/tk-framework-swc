@@ -60,8 +60,11 @@ class SwcFramework(sgtk.platform.Framework):
                             for group in match.groups():
                                 # Assuming there is only ever one match since the match is at the end of the string
                                 if group == task_name:
-                                    return tk.context_from_entity("Task", context_task["id"])                    
-            
+                                    return tk.context_from_entity("Task", context_task["id"])                     
+            # Cinematics
+            elif context.entity["type"] == "Sequence" or context.entity["type"] == "Shot":
+                if context.step:
+                    return self._find_context(tk,context,path)
             # All other entities
             else:
                 # This is either an Asset root or an Animation
