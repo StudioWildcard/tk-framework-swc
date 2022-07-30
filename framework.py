@@ -73,10 +73,10 @@ class SwcFramework(sgtk.platform.Framework):
                                                                 [["id", "is", context.entity["id"]]],
                                                                 ["sg_asset_parent","sg_asset_type"])
                     # Must be an animation...
-                    if context_entity.get("sg_asset_type") == "Animations":
+                    if context_entity.get("sg_asset_type") in ["Animations", "Audio"]:
                         return self._find_context(tk,context,path)
 
-                elif context.step['name'] == "Animations":
+                elif context.step['name'] in ["Animations", "Audio"]:
                     return self._find_context(tk,context,path)
 
                 elif context.step['name'] != "Animations":
@@ -97,7 +97,7 @@ class SwcFramework(sgtk.platform.Framework):
         for task in tasks:                        
             task_content = task['content']
             new_length = len(file_name) - len(task_content)
-            if task_content in file_name and new_length < match_length:
+            if f"_{task_content}" in file_name and new_length < match_length:
                 # We found a matching task
                 new_context_id = task['id']
                 # This is the new best task
