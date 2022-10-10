@@ -73,10 +73,10 @@ class SwcFramework(sgtk.platform.Framework):
                                                                 [["id", "is", context.entity["id"]]],
                                                                 ["sg_asset_parent","sg_asset_type"])
                     # Must be an animation...
-                    if context_entity.get("sg_asset_type") in ["Animations", "Audio"]:
+                    if context_entity.get("sg_asset_type") == "Animations":
                         return self._find_context(tk,context,path)
 
-                elif context.step['name'] in ["Animations", "Audio"]:
+                elif context.step['name'] == "Animations":
                     return self._find_context(tk,context,path)
 
                 elif context.step['name'] != "Animations":
