@@ -12,10 +12,8 @@ import sgtk,os,re
 
 logger = sgtk.platform.get_logger(__name__)
 
-# import ptvsd
-
-# # Allow other computers to attach to ptvsd at this IP address and port.
-# ptvsd.enable_attach(address=('localhost', 5678), redirect_output=True)
+# Define some inactive task states for inferring context
+inactive_task_states = ['wtg', 'apr', 'fin']
 
 class SwcFramework(sgtk.platform.Framework):
     def init_framework(self):
@@ -80,10 +78,16 @@ class SwcFramework(sgtk.platform.Framework):
                     return self._find_context(tk,context,path)
 
                 elif context.step['name'] != "Animations":
-                    file_folder = os.path.basename(os.path.dirname(path))
-                    context_task = context.sgtk.shotgun.find_one("Task", [["content", "is", file_folder],["entity", "is", context.entity],["step", "is", context.step]])
-                    if context_task:
-                        return tk.context_from_entity("Task", context_task["id"])
+                    # file_folder = os.path.basename(os.path.dirname(path))
+                    step_tasks = context.sgtk.shotgun.find("Task", [["entity", "is", context.entity],["step", "is", context.step]], ['content', 'step', 'sg_status_list'])
+                    step_tasks_list = [task for task in step_tasks if task['step'] == context.step]
+                    if len(step_tasks_list) == 1:
+                        return tk.context_from_entity("Task", step_tasks_list[0]["id"])
+                    else:
+                        active_tasks = [task for task in step_tasks if task['sg_status_list'] not in inactive_task_states] #context.sgtk.shotgun.find_one("Task", [["content", "is", file_folder],["entity", "is", context.entity],["step", "is", context.step]])
+                        if len(active_tasks) == 1:
+                            return tk.context_from_entity("Task", active_tasks[0]["id"])
+                            # TODO: Add a check for tasks belonging to the current user if this still doesn't narrow it down
         
         return context
 
