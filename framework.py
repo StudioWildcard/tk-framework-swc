@@ -32,6 +32,10 @@ class SwcFramework(sgtk.platform.Framework):
         self.log_debug("%s: Destroying..." % self)
 
     def find_task_context(self, path):
+        """
+        TODO: Replace all calls to this function with a proper load_module framework call for
+        Context_Utils module in this Framework. 
+        """
         # Try to get the context more specifically from the path on disk
         tk = sgtk.sgtk_from_path( path )
         context = tk.context_from_path(path)
