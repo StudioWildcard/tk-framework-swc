@@ -15,20 +15,20 @@ def find_task_context(path):
         # Publishing Asset
         if context.entity["type"] == "CustomEntity03":
             # We can only hope to match this file if it already is in a Step folder
-            if context.step:
-                file_name = os.path.splitext(os.path.basename(path))[0]
-                # Get all the possible tasks for this Asset Step 
-                context_tasks = context.sgtk.shotgun.find("Task", [["entity", "is", context.entity],["step", "is", context.step]], ["content"])
-                for context_task in context_tasks:                        
-                    # Build the regex pattern using https://regex101.com/r/uK8Ca4/1
-                    task_name = context_task.get("content")
-                    regex = r"\S*(" + re.escape(task_name) + r"){1}(?:_\w*)?$"
-                    matches = re.finditer(regex, file_name)
-                    for matchNum, match in enumerate(matches, start=1):
-                        for group in match.groups():
-                            # Assuming there is only ever one match since the match is at the end of the string
-                            if group == task_name:
-                                return tk.context_from_entity("Task", context_task["id"])                     
+            # if context.step:
+            file_name = os.path.splitext(os.path.basename(path))[0]
+            # Get all the possible tasks for this Asset Step 
+            context_tasks = context.sgtk.shotgun.find("Task", [["entity", "is", context.entity]], ["content"])
+            for context_task in context_tasks:                        
+                # Build the regex pattern using https://regex101.com/r/uK8Ca4/1
+                task_name = context_task.get("content")
+                regex = r"\S*(" + re.escape(task_name) + r"){1}(?:_\w*)?$"
+                matches = re.finditer(regex, file_name)
+                for matchNum, match in enumerate(matches, start=1):
+                    for group in match.groups():
+                        # Assuming there is only ever one match since the match is at the end of the string
+                        if group == task_name:
+                            return tk.context_from_entity("Task", context_task["id"])                     
         # Cinematics
         elif context.entity["type"] == "Sequence" or context.entity["type"] == "Shot":
             if context.step:
