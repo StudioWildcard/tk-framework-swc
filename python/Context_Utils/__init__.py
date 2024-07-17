@@ -1,6 +1,9 @@
 import sgtk,os,re
 logger = sgtk.platform.get_logger(__name__)
 
+# Define some inactive task states for inferring context
+inactive_task_states = ['wtg', 'apr', 'fin']
+
 def find_task_context(path):
     # Try to get the context more specifically from the path on disk
     tk = sgtk.sgtk_from_path( path )
@@ -64,20 +67,19 @@ def find_task_context(path):
 def _find_context(tk, context, path):
     file_name = os.path.splitext(os.path.basename(path))[0]
     # SWC JR: This could get slow if there are a lot of tasks, not sure if there is a way to query instead            
-    tasks = context.sgtk.shotgun.find("Task", [["entity", "is", context.entity]], ['content'])
+    tasks = [x for x in context.sgtk.shotgun.find("Task", [["entity", "is", context.entity],["step", "is", context.step]], ['content']) if f"_{x['content']}" in file_name]
     match_length = len(file_name)
     new_context_id = None
 
-    for task in tasks:                        
-        task_content = task['content']
-        new_length = len(file_name) - len(task_content)
-        if f"_{task_content}" in file_name and new_length < match_length:
+    for task in tasks:
+        new_length = len(file_name) - len(task['content'])
+        if new_length < match_length:
             # We found a matching task
             new_context_id = task['id']
             # This is the new best task
             match_length = new_length
     
     if new_context_id:
-        context = tk.context_from_entity("Task", new_context_id)   
+        context = tk.context_from_entity("Task", new_context_id)
     
     return context     

@@ -12,9 +12,6 @@ import sgtk,os,re
 
 logger = sgtk.platform.get_logger(__name__)
 
-# Define some inactive task states for inferring context
-inactive_task_states = ['wtg', 'apr', 'fin']
-
 class SwcFramework(sgtk.platform.Framework):
     def init_framework(self):
         """
