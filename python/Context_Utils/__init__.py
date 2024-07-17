@@ -66,8 +66,12 @@ def find_task_context(path):
 
 def _find_context(tk, context, path):
     file_name = os.path.splitext(os.path.basename(path))[0]
-    # SWC JR: This could get slow if there are a lot of tasks, not sure if there is a way to query instead            
-    tasks = [x for x in context.sgtk.shotgun.find("Task", [["entity", "is", context.entity],["step", "is", context.step]], ['content']) if f"_{x['content']}" in file_name]
+    # SWC JR: This could get slow if there are a lot of tasks, not sure if there is a way to query instead        
+    if context.step:    
+        tasks = [x for x in context.sgtk.shotgun.find("Task", [["entity", "is", context.entity],["step", "is", context.step]], ['content']) if f"_{x['content']}" in file_name]
+    else:    
+        tasks = [x for x in context.sgtk.shotgun.find("Task", [["entity", "is", context.entity]], ['content']) if f"_{x['content']}" in file_name]
+
     match_length = len(file_name)
     new_context_id = None
 
