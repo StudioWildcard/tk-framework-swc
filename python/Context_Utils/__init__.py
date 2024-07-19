@@ -6,11 +6,15 @@ inactive_task_states = ['wtg', 'apr', 'fin']
 
 def find_task_context(path):
     # Try to get the context more specifically from the path on disk
-    tk = sgtk.sgtk_from_path( path )
-    context = tk.context_from_path(path)
+    context = None
+    try:
+        tk = sgtk.sgtk_from_path( path )
+        context = tk.context_from_path(path)
+    except Exception as e:
+        logger.debug(f"Error: {e}")
 
     if not context:
-        logger.log_debug(f"{path} does not correspond to any context!")
+        logger.debug(f"{path} does not correspond to any context!")
         return None
         
     # In case the task folder is not registered for some reason, we can try to find it

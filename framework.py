@@ -8,9 +8,7 @@
 # agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
-import sgtk,os,re
-
-logger = sgtk.platform.get_logger(__name__)
+import sgtk
 
 class SwcFramework(sgtk.platform.Framework):
     def init_framework(self):
